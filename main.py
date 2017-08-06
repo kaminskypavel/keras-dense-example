@@ -1,3 +1,5 @@
+from sklearn.model_selection import train_test_split
+
 EPOCHS = 100
 DEBUG_LEVEL = 1
 
@@ -19,13 +21,19 @@ dataset = dataframe.values
 X = dataset[:, 0:4].astype(float)
 Y = dataset[:, 4]
 
-# encode class values as integers
-encoder = LabelEncoder()
-encoder.fit(Y)
-encoded_Y = encoder.transform(Y)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=seed)
 
-# convert integers to dummy variables (i.e. one hot encoded)
-dummy_y = np_utils.to_categorical(encoded_Y)
+# encode training set
+encoder = LabelEncoder()
+encoder.fit(Y_train)
+encoded_Y = encoder.transform(Y_train)
+Y_hat_train = np_utils.to_categorical(encoded_Y)
+
+# encode testing set
+encoder = LabelEncoder()
+encoder.fit(Y_test)
+encoded_Y = encoder.transform(Y_test)
+Y_hat_test = np_utils.to_categorical(encoded_Y)
 
 # create model
 model = Sequential()
@@ -40,6 +48,5 @@ tensorBoardCallBack = keras.callbacks.TensorBoard(log_dir='./logs',
                                                   write_graph=True,
                                                   write_images=True)
 
-model.fit(X, dummy_y, epochs=EPOCHS, batch_size=5, verbose=DEBUG_LEVEL, callbacks=[tensorBoardCallBack],
-          validation_split=0.33)
-
+model.fit(X_train, Y_hat_train, epochs=EPOCHS, batch_size=5, verbose=DEBUG_LEVEL, callbacks=[tensorBoardCallBack],
+          validation_data=(X_test, Y_hat_test))
